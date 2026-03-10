@@ -1,0 +1,991 @@
+import { useState, useRef } from "react";
+
+// ─── Seed Data ────────────────────────────────────────────────────────────────
+const ADMIN_EMAIL = "admin@gossip-anonymous.com";
+
+const SEED_POSTS = [
+  {
+    id: 1, email: "jake@example.com", content: "Does anyone else feel like they're playing a character of themselves every single day? Like you know exactly what you're going to say before you say it.", likes: 47, time: "2h ago", tags: ["thoughts"],
+    comments: [
+      { id: 101, email: "sara@example.com", content: "Every single morning. The mask goes on automatically.", likes: 12, time: "1h ago", replies: [
+        { id: 1001, email: "mike@example.com", content: "Honestly this hits. Therapy helped me figure out where the mask ends.", likes: 5, time: "45m ago" }
+      ]},
+      { id: 102, email: "tom@example.com", content: "I think that's called being a functional adult lol", likes: 8, time: "30m ago", replies: [] }
+    ]
+  },
+  {
+    id: 2, email: "alex@example.com", content: "I quit my job today. No backup plan. First time in my life I feel actually alive.", likes: 203, time: "4h ago", tags: ["life"],
+    comments: [
+      { id: 201, email: "nina@example.com", content: "This is either the bravest or most chaotic thing I've read today.", likes: 31, time: "3h ago", replies: [
+        { id: 2001, email: "alex@example.com", content: "Honestly both. Update: still alive.", likes: 18, time: "2h ago" }
+      ]}
+    ]
+  },
+  {
+    id: 3, email: "admin@gossip-anonymous.com", content: "The moon looked insane tonight. I stood outside for 20 minutes just staring at it like a feral cat.", likes: 89, time: "6h ago", tags: ["moments"],
+    comments: []
+  },
+  {
+    id: 4, email: "priya@example.com", content: "People who say 'we need to talk' over text deserve a special place in the bad vibes hall of fame.", likes: 312, time: "8h ago", tags: ["relatable"],
+    comments: [
+      { id: 401, email: "dan@example.com", content: "Or just 'k.' with a period. The most weaponized punctuation.", likes: 44, time: "7h ago", replies: [] }
+    ]
+  },
+  {
+    id: 5, email: "chen@example.com", content: "I've been learning guitar for 3 months and I still can't do a clean F chord. This is my villain origin story.", likes: 156, time: "10h ago", tags: ["real"],
+    comments: [
+      { id: 501, email: "lisa@example.com", content: "F chord took me 6 months. You're ahead of schedule.", likes: 22, time: "9h ago", replies: [] }
+    ]
+  },
+];
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const C = {
+  bg: "#f7f7f5",
+  surface: "#ffffff",
+  surfaceHover: "#fafaf8",
+  border: "#e8e8e2",
+  borderHigh: "#d4d4cc",
+  accent: "#5b4fff",
+  accentLight: "#5b4fff14",
+  accentMid: "#5b4fff30",
+  text: "#1a1a2e",
+  textMuted: "#7a7a8c",
+  textDim: "#b4b4c4",
+  sidebar: "#ffffff",
+  adminBg: "#fff9f0",
+  adminBorder: "#ffd58a",
+  adminAccent: "#f59e0b",
+  green: "#22c55e",
+  red: "#ef4444",
+  redLight: "#fef2f2",
+  greenLight: "#f0fdf4",
+};
+
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Playfair+Display:wght@700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: ${C.bg}; color: ${C.text}; font-family: 'Figtree', sans-serif; min-height: 100vh; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: ${C.border}; border-radius: 2px; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+
+  .fade-up { animation: fadeUp 0.35s ease both; }
+  .slide-in { animation: slideIn 0.25s ease both; }
+
+  input, textarea {
+    background: ${C.bg};
+    border: 1.5px solid ${C.border};
+    color: ${C.text};
+    font-family: 'Figtree', sans-serif;
+    font-size: 14px;
+    border-radius: 10px;
+    padding: 11px 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: none;
+  }
+  input:focus, textarea:focus {
+    border-color: ${C.accent};
+    box-shadow: 0 0 0 3px ${C.accentMid};
+    background: #fff;
+  }
+  input::placeholder, textarea::placeholder { color: ${C.textDim}; }
+
+  button { cursor: pointer; font-family: 'Figtree', sans-serif; border: none; outline: none; transition: all 0.15s; }
+
+  .btn-primary {
+    background: ${C.accent};
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: #4a3fee; transform: translateY(-1px); box-shadow: 0 4px 14px ${C.accentMid}; }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-ghost {
+    background: transparent;
+    color: ${C.textMuted};
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1.5px solid ${C.border};
+    font-weight: 500;
+  }
+  .btn-ghost:hover { border-color: ${C.borderHigh}; color: ${C.text}; background: ${C.bg}; }
+
+  .btn-text {
+    background: none;
+    color: ${C.textMuted};
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .btn-text:hover { background: ${C.bg}; color: ${C.text}; }
+
+  .card {
+    background: ${C.surface};
+    border: 1.5px solid ${C.border};
+    border-radius: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .card:hover { border-color: ${C.borderHigh}; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: ${C.textMuted};
+    cursor: pointer;
+    transition: all 0.15s;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { background: ${C.bg}; color: ${C.text}; }
+  .nav-item.active { background: ${C.accentLight}; color: ${C.accent}; font-weight: 600; }
+
+  .tag {
+    display: inline-flex;
+    background: ${C.accentLight};
+    color: ${C.accent};
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 5px;
+    letter-spacing: 0.04em;
+  }
+
+  .admin-badge {
+    background: #fff3cd;
+    color: ${C.adminAccent};
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid ${C.adminBorder};
+  }
+
+  .loader {
+    width: 14px; height: 14px;
+    border: 2px solid ${C.border};
+    border-top-color: ${C.accent};
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  .stat-card {
+    background: ${C.surface};
+    border: 1.5px solid ${C.border};
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .divider { height: 1px; background: ${C.border}; margin: 0; }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, ${C.accentLight}, ${C.accentMid});
+    border: 1.5px solid ${C.accentMid};
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .reply-indent {
+    border-left: 2px solid ${C.border};
+    margin-left: 20px;
+    padding-left: 16px;
+  }
+
+  .cursor { display:inline-block; width:2px; height:1.1em; background:${C.accent}; margin-left:1px; vertical-align:middle; animation:blink 1s step-end infinite; }
+`;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const Icon = ({ name, size = 16, color = "currentColor" }) => {
+  const icons = {
+    feed: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+    profile: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+    admin: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+    heart: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>,
+    heartFill: <svg width={size} height={size} fill={color} stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>,
+    comment: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+    signout: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+    trash: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>,
+    users: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>,
+    mail: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
+    crown: <svg width={size} height={size} fill="none" stroke={color} strokeWidth="2" viewBox="0 0 24 24"><path d="M2 20h20M5 20V10l7-6 7 6v10"/><path d="M9 20v-5h6v5"/></svg>,
+  };
+  return icons[name] || null;
+};
+
+const Loader = () => <span className="loader" />;
+
+// ─── Landing ──────────────────────────────────────────────────────────────────
+function Landing({ onNav }) {
+  const [wi, setWi] = useState(0);
+  const [disp, setDisp] = useState("");
+  const [typing, setTyping] = useState(true);
+  const words = ["anonymous.", "hidden.", "the tea.", "unfiltered.", "free."];
+
+  useState(() => {
+    let t;
+    const tick = () => {
+      const w = words[wi];
+      setDisp(d => {
+        if (typing) {
+          if (d.length < w.length) { t = setTimeout(tick, 85); return w.slice(0, d.length + 1); }
+          else { t = setTimeout(() => { setTyping(false); tick(); }, 1600); return d; }
+        } else {
+          if (d.length > 0) { t = setTimeout(tick, 40); return d.slice(0, -1); }
+          else { setWi(i => (i + 1) % words.length); setTyping(true); t = setTimeout(tick, 100); return d; }
+        }
+      });
+    };
+    t = setTimeout(tick, 400);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, background: `linear-gradient(160deg, #f0eeff 0%, ${C.bg} 50%, #fff8f0 100%)` }}>
+      <div style={{ maxWidth: 580, width: "100%", textAlign: "center" }} className="fade-up">
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: C.accentLight, border: `1px solid ${C.accentMid}`, borderRadius: 100, padding: "6px 16px", marginBottom: 40 }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.accent }} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: C.accent, letterSpacing: "0.1em", textTransform: "uppercase" }}>gossip-anonymous</span>
+        </div>
+
+        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(44px, 8vw, 72px)", fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.01em", marginBottom: 20, color: C.text }}>
+          say anything.<br />
+          <span style={{ color: C.accent }}>be {disp}<span className="cursor" /></span>
+        </h1>
+
+        <p style={{ color: C.textMuted, fontSize: 16, lineHeight: 1.7, marginBottom: 44, maxWidth: 420, margin: "0 auto 44px" }}>
+          Spill it. Say it. Stay anonymous. Every voice is still <strong style={{ color: C.text }}>anonymous_user</strong> — no names, no receipts, just the real tea.
+        </p>
+
+        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <button className="btn-primary" onClick={() => onNav("signup")} style={{ padding: "13px 32px", fontSize: 14, fontWeight: 700 }}>
+            join gossip-anonymous →
+          </button>
+          <button className="btn-ghost" onClick={() => onNav("login")}>sign in</button>
+        </div>
+
+        <div style={{ display: "flex", gap: 32, justifyContent: "center", marginTop: 56, color: C.textDim, fontSize: 12 }}>
+          {["no profiles visible", "no names attached", "just the real tea"].map(t => (
+            <span key={t} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: C.accent, fontWeight: 700 }}>✓</span> {t}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+function Auth({ mode, onNav, onAuth }) {
+  const isSig = mode === "signup";
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState("form");
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  const [vCode] = useState(() => Math.floor(100000 + Math.random() * 900000).toString());
+
+  const submit = () => {
+    if (!email || !pw) { setErr("please fill in both fields."); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { setErr("that doesn't look like a valid email."); return; }
+    if (pw.length < 6) { setErr("password must be at least 6 characters."); return; }
+    setErr(""); setLoading(true);
+    setTimeout(() => { setLoading(false); if (isSig) setStep("verify"); else onAuth(email); }, 1000);
+  };
+
+  const verify = () => {
+    if (code === vCode) onAuth(email);
+    else setErr(`wrong code. (hint: ${vCode})`);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: `linear-gradient(160deg, #f0eeff 0%, ${C.bg} 60%)` }}>
+      <div className="fade-up" style={{ maxWidth: 420, width: "100%" }}>
+        <button onClick={() => onNav("landing")} style={{ background: "none", color: C.textMuted, fontSize: 13, marginBottom: 36, display: "flex", alignItems: "center", gap: 6, fontWeight: 500 }}>
+          ← back
+        </button>
+
+        <div className="card" style={{ padding: "36px 32px" }}>
+          <div style={{ marginBottom: 28 }}>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 700, marginBottom: 6 }}>
+              {step === "verify" ? "check your inbox" : isSig ? "join gossip-anonymous" : "welcome back"}
+            </h2>
+            <p style={{ color: C.textMuted, fontSize: 13, lineHeight: 1.6 }}>
+              {step === "verify"
+                ? `we sent a 6-digit code to ${email}`
+                : isSig
+                ? "your identity stays hidden. you'll always appear as anonymous_user — spill freely."
+                : "sign in and spill the tea."}
+            </p>
+          </div>
+
+          {step === "form" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>email address</label>
+                <input type="email" placeholder="you@somewhere.com" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>password</label>
+                <input type="password" placeholder="••••••••" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
+              </div>
+
+              {isSig && (
+                <div style={{ background: C.accentLight, border: `1px solid ${C.accentMid}`, borderRadius: 10, padding: "12px 16px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ fontSize: 16 }}>👤</span>
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 2 }}>you'll appear as <span style={{ color: C.accent }}>anonymous_user</span></p>
+                    <p style={{ fontSize: 11, color: C.textMuted }}>your email is only for verification. nobody can see it.</p>
+                  </div>
+                </div>
+              )}
+
+              {err && <p style={{ color: C.red, fontSize: 12, fontWeight: 500 }}>{err}</p>}
+
+              <button className="btn-primary" onClick={submit} disabled={loading} style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                {loading ? <><Loader /> processing...</> : isSig ? "create account →" : "sign in →"}
+              </button>
+
+              <p style={{ textAlign: "center", fontSize: 12, color: C.textMuted }}>
+                {isSig ? "already have an account? " : "new here? "}
+                <button onClick={() => onNav(isSig ? "login" : "signup")} style={{ background: "none", color: C.accent, fontSize: 12, fontWeight: 600 }}>
+                  {isSig ? "sign in" : "join gossip-anonymous"}
+                </button>
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <p style={{ fontSize: 12, color: C.textMuted, background: C.bg, padding: "10px 14px", borderRadius: 8 }}>
+                demo code: <strong style={{ color: C.accent, fontFamily: "monospace", fontSize: 14 }}>{vCode}</strong>
+              </p>
+              <input type="text" maxLength={6} placeholder="000000" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))} style={{ fontSize: 22, letterSpacing: "0.3em", textAlign: "center", fontFamily: "monospace" }} onKeyDown={e => e.key === "Enter" && verify()} />
+              {err && <p style={{ color: C.red, fontSize: 12, fontWeight: 500 }}>{err}</p>}
+              <button className="btn-primary" onClick={verify} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                verify & enter →
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── App Shell ────────────────────────────────────────────────────────────────
+function App({ userEmail, onSignout }) {
+  const [tab, setTab] = useState("feed");
+  const [posts, setPosts] = useState(SEED_POSTS);
+  const [admins, setAdmins] = useState(new Set([ADMIN_EMAIL]));
+  const isAdmin = admins.has(userEmail);
+  const [mobileNav, setMobileNav] = useState(false);
+
+  const navItems = [
+    { id: "feed", label: "Feed", icon: "feed" },
+    { id: "profile", label: "My Posts", icon: "profile" },
+    ...(isAdmin ? [{ id: "admin", label: "Admin", icon: "admin", badge: true }] : []),
+  ];
+
+  const sidebarContent = (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ padding: "20px 16px 16px", borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.accent, boxShadow: `0 0 8px ${C.accent}` }} />
+          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: C.text }}>gossip-anonymous</span>
+        </div>
+      </div>
+
+      <nav style={{ padding: "12px 10px", flex: 1 }}>
+        {navItems.map(item => (
+          <button key={item.id} className={`nav-item ${tab === item.id ? "active" : ""}`} onClick={() => { setTab(item.id); setMobileNav(false); }}>
+            <Icon name={item.icon} size={16} color={tab === item.id ? C.accent : C.textMuted} />
+            <span>{item.label}</span>
+            {item.badge && <span className="admin-badge" style={{ marginLeft: "auto" }}>admin</span>}
+          </button>
+        ))}
+      </nav>
+
+      <div style={{ padding: "12px 10px", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ padding: "10px 14px", marginBottom: 8 }}>
+          <p style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>signed in as</p>
+          <p style={{ fontSize: 12, color: C.accent, fontWeight: 600, wordBreak: "break-all" }}>anonymous_user</p>
+          {isAdmin && <span className="admin-badge" style={{ marginTop: 4, display: "inline-block" }}>admin</span>}
+        </div>
+        <button className="nav-item" onClick={onSignout}>
+          <Icon name="signout" size={16} color={C.textMuted} />
+          <span>Sign out</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: C.bg }}>
+      {/* Desktop sidebar */}
+      <aside style={{ width: 220, background: C.surface, borderRight: `1px solid ${C.border}`, position: "sticky", top: 0, height: "100vh", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+        {sidebarContent}
+      </aside>
+
+      {/* Main */}
+      <main style={{ flex: 1, minWidth: 0 }}>
+        {tab === "feed" && <FeedTab posts={posts} setPosts={setPosts} userEmail={userEmail} isAdmin={isAdmin} />}
+        {tab === "profile" && <ProfileTab posts={posts} userEmail={userEmail} />}
+        {tab === "admin" && isAdmin && <AdminTab posts={posts} setPosts={setPosts} admins={admins} setAdmins={setAdmins} userEmail={userEmail} />}
+      </main>
+    </div>
+  );
+}
+
+// ─── Feed Tab ─────────────────────────────────────────────────────────────────
+function FeedTab({ posts, setPosts, userEmail, isAdmin }) {
+  const [draft, setDraft] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [liked, setLiked] = useState(new Set());
+  const [sortBy, setSortBy] = useState("recent");
+  const [expandedComments, setExpandedComments] = useState(new Set());
+
+  const handlePost = () => {
+    if (!draft.trim() || draft.length > 280) return;
+    setPosting(true);
+    setTimeout(() => {
+      setPosts(prev => [{
+        id: Date.now(), email: userEmail, content: draft.trim(),
+        likes: 0, time: "just now", tags: [], comments: []
+      }, ...prev]);
+      setDraft("");
+      setPosting(false);
+    }, 700);
+  };
+
+  const handleLike = (id) => {
+    setLiked(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); setPosts(p => p.map(x => x.id === id ? { ...x, likes: x.likes - 1 } : x)); }
+      else { next.add(id); setPosts(p => p.map(x => x.id === id ? { ...x, likes: x.likes + 1 } : x)); }
+      return next;
+    });
+  };
+
+  const toggleComments = (id) => setExpandedComments(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const addComment = (postId, content) => {
+    setPosts(prev => prev.map(p => p.id === postId ? {
+      ...p, comments: [...p.comments, { id: Date.now(), email: userEmail, content, likes: 0, time: "just now", replies: [] }]
+    } : p));
+  };
+
+  const addReply = (postId, commentId, content) => {
+    setPosts(prev => prev.map(p => p.id === postId ? {
+      ...p, comments: p.comments.map(c => c.id === commentId ? {
+        ...c, replies: [...c.replies, { id: Date.now(), email: userEmail, content, likes: 0, time: "just now" }]
+      } : c)
+    } : p));
+  };
+
+  const sorted = sortBy === "top" ? [...posts].sort((a, b) => b.likes - a.likes) : posts;
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px" }}>
+      {/* Compose */}
+      <div className="card fade-up" style={{ padding: 20, marginBottom: 28 }}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "center" }}>
+          <div className="avatar">👤</div>
+          <span style={{ fontSize: 13, color: C.textMuted }}>posting as <strong style={{ color: C.accent }}>anonymous_user</strong></span>
+        </div>
+        <textarea rows={3} placeholder="spill the tea ☕ — no one knows it's you." value={draft} onChange={e => setDraft(e.target.value)} style={{ marginBottom: 12 }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 11, color: draft.length > 280 ? C.red : C.textDim, fontWeight: 500 }}>{draft.length}/280</span>
+          <button className="btn-primary" onClick={handlePost} disabled={posting || !draft.trim() || draft.length > 280} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 20px" }}>
+            {posting ? <><Loader /> posting...</> : "Post"}
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 2, marginBottom: 20, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: 4 }}>
+        {["recent", "top"].map(s => (
+          <button key={s} onClick={() => setSortBy(s)} style={{
+            flex: 1, padding: "8px 0", borderRadius: 7, fontSize: 13, fontWeight: 600,
+            background: sortBy === s ? C.accent : "transparent",
+            color: sortBy === s ? "#fff" : C.textMuted,
+            border: "none", transition: "all 0.15s"
+          }}>{s === "recent" ? "Recent" : "Top"}</button>
+        ))}
+      </div>
+
+      {/* Posts */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {sorted.map((post, i) => (
+          <PostCard key={post.id} post={post} liked={liked} onLike={handleLike}
+            showComments={expandedComments.has(post.id)} onToggleComments={toggleComments}
+            onAddComment={addComment} onAddReply={addReply} userEmail={userEmail}
+            animDelay={i * 0.04} isAdmin={isAdmin} />
+        ))}
+      </div>
+
+      <p style={{ textAlign: "center", color: C.textDim, fontSize: 12, marginTop: 40, fontWeight: 500 }}>
+        — you've caught up on all the tea —
+      </p>
+    </div>
+  );
+}
+
+// ─── Post Card ────────────────────────────────────────────────────────────────
+function PostCard({ post, liked, onLike, showComments, onToggleComments, onAddComment, onAddReply, userEmail, animDelay, isAdmin }) {
+  const [commentDraft, setCommentDraft] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [likedComments, setLikedComments] = useState(new Set());
+
+  const submitComment = () => {
+    if (!commentDraft.trim()) return;
+    setSubmitting(true);
+    setTimeout(() => { onAddComment(post.id, commentDraft.trim()); setCommentDraft(""); setSubmitting(false); }, 500);
+  };
+
+  const totalComments = post.comments.reduce((n, c) => n + 1 + c.replies.length, 0);
+
+  return (
+    <div className="card fade-up" style={{ animationDelay: `${animDelay}s`, overflow: "hidden" }}>
+      <div style={{ padding: "20px 22px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div className="avatar">👤</div>
+            <div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: C.accent, display: "block" }}>anonymous_user</span>
+              <span style={{ fontSize: 11, color: C.textDim }}>{post.time}</span>
+            </div>
+          </div>
+          {post.tags?.length > 0 && <span className="tag">#{post.tags[0]}</span>}
+        </div>
+
+        <p style={{ fontSize: 15, lineHeight: 1.68, color: C.text, marginBottom: 16 }}>{post.content}</p>
+
+        {isAdmin && (
+          <div style={{ background: "#fffbeb", border: `1px solid ${C.adminBorder}`, borderRadius: 8, padding: "8px 12px", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <Icon name="mail" size={13} color={C.adminAccent} />
+            <span style={{ fontSize: 12, color: C.adminAccent, fontWeight: 600 }}>{post.email}</span>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <button onClick={() => onLike(post.id)} style={{
+            background: liked.has(post.id) ? "#fff1f1" : "transparent",
+            color: liked.has(post.id) ? C.red : C.textMuted,
+            display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600,
+            padding: "6px 10px", borderRadius: 7, transition: "all 0.15s",
+            border: `1px solid ${liked.has(post.id) ? "#fecaca" : "transparent"}`,
+          }}>
+            <Icon name={liked.has(post.id) ? "heartFill" : "heart"} size={14} color={liked.has(post.id) ? C.red : C.textMuted} />
+            {post.likes}
+          </button>
+
+          <button onClick={() => onToggleComments(post.id)} style={{
+            background: showComments ? C.accentLight : "transparent",
+            color: showComments ? C.accent : C.textMuted,
+            display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600,
+            padding: "6px 10px", borderRadius: 7, transition: "all 0.15s",
+            border: `1px solid ${showComments ? C.accentMid : "transparent"}`,
+          }}>
+            <Icon name="comment" size={14} color={showComments ? C.accent : C.textMuted} />
+            {totalComments} {totalComments === 1 ? "comment" : "comments"}
+          </button>
+        </div>
+      </div>
+
+      {showComments && (
+        <div style={{ borderTop: `1px solid ${C.border}`, background: C.bg }}>
+          {post.comments.length > 0 && (
+            <div style={{ padding: "16px 22px", display: "flex", flexDirection: "column", gap: 12 }}>
+              {post.comments.map(comment => (
+                <CommentBlock key={comment.id} comment={comment} postId={post.id} onAddReply={onAddReply}
+                  likedComments={likedComments} setLikedComments={setLikedComments} isAdmin={isAdmin} />
+              ))}
+            </div>
+          )}
+
+          <div style={{ padding: "12px 22px 16px", borderTop: post.comments.length > 0 ? `1px solid ${C.border}` : "none", display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <div className="avatar" style={{ width: 28, height: 28, fontSize: 12, marginTop: 2 }}>👤</div>
+            <div style={{ flex: 1 }}>
+              <textarea rows={2} placeholder="write a comment..." value={commentDraft} onChange={e => setCommentDraft(e.target.value)} style={{ fontSize: 13, marginBottom: 8 }} />
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button className="btn-primary" onClick={submitComment} disabled={submitting || !commentDraft.trim()} style={{ padding: "7px 16px", fontSize: 12, display: "flex", gap: 6, alignItems: "center" }}>
+                  {submitting ? <><Loader /> posting...</> : "Post"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Comment Block ────────────────────────────────────────────────────────────
+function CommentBlock({ comment, postId, onAddReply, likedComments, setLikedComments, isAdmin }) {
+  const [showReply, setShowReply] = useState(false);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitReply = () => {
+    if (!replyDraft.trim()) return;
+    setSubmitting(true);
+    setTimeout(() => { onAddReply(postId, comment.id, replyDraft.trim()); setReplyDraft(""); setSubmitting(false); setShowReply(false); }, 500);
+  };
+
+  const likeComment = (id) => {
+    setLikedComments(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="slide-in">
+      <div style={{ display: "flex", gap: 10 }}>
+        <div className="avatar" style={{ width: 26, height: 26, fontSize: 11 }}>👤</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.accent }}>anonymous_user</span>
+            <span style={{ fontSize: 11, color: C.textDim }}>{comment.time}</span>
+            {isAdmin && (
+              <span style={{ fontSize: 11, color: C.adminAccent, background: "#fffbeb", padding: "1px 7px", borderRadius: 4, border: `1px solid ${C.adminBorder}`, display: "flex", alignItems: "center", gap: 4 }}>
+                <Icon name="mail" size={10} color={C.adminAccent} /> {comment.email}
+              </span>
+            )}
+          </div>
+          <p style={{ fontSize: 13, lineHeight: 1.55, color: C.text, marginBottom: 6 }}>{comment.content}</p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => likeComment(comment.id)} style={{ background: "none", color: likedComments.has(comment.id) ? C.red : C.textMuted, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+              <Icon name={likedComments.has(comment.id) ? "heartFill" : "heart"} size={12} color={likedComments.has(comment.id) ? C.red : C.textMuted} />
+              {comment.likes + (likedComments.has(comment.id) ? 1 : 0)}
+            </button>
+            <button className="btn-text" onClick={() => setShowReply(r => !r)} style={{ fontSize: 12, color: showReply ? C.accent : C.textMuted }}>
+              reply
+            </button>
+          </div>
+
+          {showReply && (
+            <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <textarea rows={2} placeholder="write a reply..." value={replyDraft} onChange={e => setReplyDraft(e.target.value)} style={{ fontSize: 13 }} />
+              <button className="btn-primary" onClick={submitReply} disabled={submitting || !replyDraft.trim()} style={{ padding: "8px 14px", fontSize: 12, flexShrink: 0, display: "flex", gap: 6 }}>
+                {submitting ? <Loader /> : "Post"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {comment.replies.length > 0 && (
+        <div className="reply-indent" style={{ marginTop: 10 }}>
+          {comment.replies.map(reply => (
+            <div key={reply.id} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+              <div className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>👤</div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: C.accent }}>anonymous_user</span>
+                  <span style={{ fontSize: 11, color: C.textDim }}>{reply.time}</span>
+                  {isAdmin && (
+                    <span style={{ fontSize: 11, color: C.adminAccent, background: "#fffbeb", padding: "1px 7px", borderRadius: 4, border: `1px solid ${C.adminBorder}`, display: "flex", alignItems: "center", gap: 4 }}>
+                      <Icon name="mail" size={10} color={C.adminAccent} /> {reply.email}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: 13, lineHeight: 1.55, color: C.text }}>{reply.content}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Profile Tab ──────────────────────────────────────────────────────────────
+function ProfileTab({ posts, userEmail }) {
+  const myPosts = posts.filter(p => p.email === userEmail);
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="fade-up" style={{ marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 14, padding: "20px 24px" }}>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: C.accentLight, border: `2px solid ${C.accentMid}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>
+          <div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, marginBottom: 2 }}>anonymous_user</h2>
+            <p style={{ fontSize: 13, color: C.textMuted }}>{myPosts.length} post{myPosts.length !== 1 ? "s" : ""} · {myPosts.reduce((n, p) => n + p.likes, 0)} total likes</p>
+          </div>
+        </div>
+      </div>
+
+      {myPosts.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: C.textMuted }}>
+          <p style={{ fontSize: 32, marginBottom: 12 }}>🌑</p>
+          <p style={{ fontSize: 15, fontWeight: 600 }}>no tea spilled yet</p>
+          <p style={{ fontSize: 13, marginTop: 4 }}>go to the feed and spill some tea.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {myPosts.map((post, i) => (
+            <div key={post.id} className="card fade-up" style={{ padding: "20px 22px", animationDelay: `${i * 0.05}s` }}>
+              <p style={{ fontSize: 15, lineHeight: 1.65, color: C.text, marginBottom: 14 }}>{post.content}</p>
+              <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: C.textMuted, display: "flex", alignItems: "center", gap: 5 }}>
+                  <Icon name="heart" size={13} color={C.textMuted} /> {post.likes}
+                </span>
+                <span style={{ fontSize: 12, color: C.textMuted, display: "flex", alignItems: "center", gap: 5 }}>
+                  <Icon name="comment" size={13} color={C.textMuted} /> {post.comments.reduce((n, c) => n + 1 + c.replies.length, 0)}
+                </span>
+                <span style={{ fontSize: 11, color: C.textDim, marginLeft: "auto" }}>{post.time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Admin Tab ────────────────────────────────────────────────────────────────
+function AdminTab({ posts, setPosts, admins, setAdmins, userEmail }) {
+  const [newAdmin, setNewAdmin] = useState("");
+  const [adminErr, setAdminErr] = useState("");
+  const [adminOk, setAdminOk] = useState("");
+  const [tab, setTab] = useState("stats");
+
+  const totalLikes = posts.reduce((n, p) => n + p.likes, 0);
+  const totalComments = posts.reduce((n, p) => n + p.comments.reduce((m, c) => m + 1 + c.replies.length, 0), 0);
+  const uniqueUsers = new Set(posts.map(p => p.email)).size;
+  const topPost = [...posts].sort((a, b) => b.likes - a.likes)[0];
+  const userActivity = {};
+  posts.forEach(p => { userActivity[p.email] = (userActivity[p.email] || 0) + 1; });
+  const topUser = Object.entries(userActivity).sort((a, b) => b[1] - a[1])[0];
+
+  const grantAdmin = () => {
+    if (!newAdmin || !/\S+@\S+\.\S+/.test(newAdmin)) { setAdminErr("enter a valid email."); return; }
+    if (admins.has(newAdmin)) { setAdminErr("already an admin."); return; }
+    setAdmins(prev => new Set([...prev, newAdmin]));
+    setAdminErr(""); setAdminOk(`${newAdmin} is now an admin.`);
+    setNewAdmin("");
+    setTimeout(() => setAdminOk(""), 3000);
+  };
+
+  const revokeAdmin = (email) => {
+    if (email === ADMIN_EMAIL) return;
+    setAdmins(prev => { const n = new Set(prev); n.delete(email); return n; });
+  };
+
+  const deletePost = (id) => setPosts(prev => prev.filter(p => p.id !== id));
+
+  const statTabs = ["stats", "posts", "users", "admins"];
+
+  return (
+    <div style={{ maxWidth: 820, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="fade-up" style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <Icon name="admin" size={20} color={C.adminAccent} />
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700 }}>Admin Panel</h1>
+          <span className="admin-badge">restricted</span>
+        </div>
+        <p style={{ color: C.textMuted, fontSize: 13 }}>full visibility into gossip-anonymous. emails shown, posts manageable.</p>
+      </div>
+
+      {/* Sub tabs */}
+      <div style={{ display: "flex", gap: 2, marginBottom: 24, background: C.surface, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: 4 }}>
+        {statTabs.map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            flex: 1, padding: "8px 0", borderRadius: 7, fontSize: 13, fontWeight: 600, border: "none", transition: "all 0.15s", textTransform: "capitalize",
+            background: tab === t ? C.adminAccent : "transparent",
+            color: tab === t ? "#fff" : C.textMuted,
+          }}>{t}</button>
+        ))}
+      </div>
+
+      {tab === "stats" && (
+        <div className="fade-up">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 24 }}>
+            {[
+              { label: "Total Posts", value: posts.length, icon: "feed", color: C.accent },
+              { label: "Total Likes", value: totalLikes, icon: "heart", color: C.red },
+              { label: "Total Comments", value: totalComments, icon: "comment", color: C.green },
+              { label: "Unique Users", value: uniqueUsers, icon: "users", color: C.adminAccent },
+            ].map(s => (
+              <div key={s.label} className="stat-card" style={{ borderLeft: `3px solid ${s.color}` }}>
+                <p style={{ fontSize: 11, color: C.textMuted, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 8 }}>{s.label}</p>
+                <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div className="stat-card">
+              <p style={{ fontSize: 11, color: C.textMuted, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>🔥 top post</p>
+              {topPost && (
+                <>
+                  <p style={{ fontSize: 13, lineHeight: 1.55, color: C.text, marginBottom: 10 }}>"{topPost.content.slice(0, 100)}{topPost.content.length > 100 ? "…" : ""}"</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 12, color: C.red, fontWeight: 600 }}>♥ {topPost.likes} likes</span>
+                    <span style={{ fontSize: 12, color: C.adminAccent }}>{topPost.email}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="stat-card">
+              <p style={{ fontSize: 11, color: C.textMuted, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>✍️ most active user</p>
+              {topUser && (
+                <>
+                  <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, color: C.accent, marginBottom: 6 }}>{topUser[1]} posts</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon name="mail" size={12} color={C.textMuted} />
+                    <span style={{ fontSize: 12, color: C.textMuted }}>{topUser[0]}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "posts" && (
+        <div className="fade-up" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {posts.map(post => (
+            <div key={post.id} className="card" style={{ padding: "16px 20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <Icon name="mail" size={13} color={C.adminAccent} />
+                    <span style={{ fontSize: 12, color: C.adminAccent, fontWeight: 600 }}>{post.email}</span>
+                    <span style={{ fontSize: 11, color: C.textDim }}>{post.time}</span>
+                  </div>
+                  <p style={{ fontSize: 14, color: C.text, lineHeight: 1.55, marginBottom: 8 }}>{post.content}</p>
+                  <div style={{ display: "flex", gap: 14 }}>
+                    <span style={{ fontSize: 12, color: C.textMuted }}>♥ {post.likes}</span>
+                    <span style={{ fontSize: 12, color: C.textMuted }}>💬 {post.comments.length}</span>
+                  </div>
+                </div>
+                <button onClick={() => deletePost(post.id)} style={{ background: C.redLight, color: C.red, border: `1px solid #fecaca`, borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                  <Icon name="trash" size={13} color={C.red} /> delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "users" && (
+        <div className="fade-up">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {Object.entries(userActivity).sort((a, b) => b[1] - a[1]).map(([email, count]) => {
+              const userPosts = posts.filter(p => p.email === email);
+              const userLikes = userPosts.reduce((n, p) => n + p.likes, 0);
+              return (
+                <div key={email} className="card" style={{ padding: "16px 20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div className="avatar">👤</div>
+                      <div>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: C.accent }}>anonymous_user</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          <Icon name="mail" size={11} color={C.adminAccent} />
+                          <span style={{ fontSize: 12, color: C.adminAccent }}>{email}</span>
+                          {admins.has(email) && <span className="admin-badge">admin</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: 16, fontSize: 12, color: C.textMuted }}>
+                      <span><strong style={{ color: C.text }}>{count}</strong> posts</span>
+                      <span><strong style={{ color: C.text }}>{userLikes}</strong> likes</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {tab === "admins" && (
+        <div className="fade-up">
+          <div className="card" style={{ padding: "20px 22px", marginBottom: 16 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 12 }}>Grant admin access</p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <input type="email" placeholder="user@email.com" value={newAdmin} onChange={e => setNewAdmin(e.target.value)} onKeyDown={e => e.key === "Enter" && grantAdmin()} style={{ flex: 1 }} />
+              <button className="btn-primary" onClick={grantAdmin} style={{ flexShrink: 0, background: C.adminAccent, padding: "10px 18px" }}>Grant</button>
+            </div>
+            {adminErr && <p style={{ color: C.red, fontSize: 12, marginTop: 8, fontWeight: 500 }}>{adminErr}</p>}
+            {adminOk && <p style={{ color: C.green, fontSize: 12, marginTop: 8, fontWeight: 500 }}>✓ {adminOk}</p>}
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[...admins].map(email => (
+              <div key={email} className="card" style={{ padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Icon name="crown" size={16} color={C.adminAccent} />
+                  <div>
+                    <span style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{email}</span>
+                    {email === ADMIN_EMAIL && <span style={{ fontSize: 11, color: C.textMuted, display: "block" }}>owner — cannot be revoked</span>}
+                  </div>
+                </div>
+                {email !== ADMIN_EMAIL && (
+                  <button onClick={() => revokeAdmin(email)} style={{ background: C.redLight, color: C.red, border: `1px solid #fecaca`, borderRadius: 7, padding: "6px 12px", fontSize: 12, fontWeight: 600 }}>
+                    revoke
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
+export default function Root() {
+  const [screen, setScreen] = useState("landing");
+  const [userEmail, setUserEmail] = useState(null);
+
+  const handleAuth = (email) => { setUserEmail(email); setScreen("app"); };
+  const handleSignout = () => { setUserEmail(null); setScreen("landing"); };
+
+  return (
+    <>
+      <style>{css}</style>
+      {screen === "landing" && <Landing onNav={setScreen} />}
+      {(screen === "signup" || screen === "login") && <Auth mode={screen} onNav={setScreen} onAuth={handleAuth} />}
+      {screen === "app" && <App userEmail={userEmail} onSignout={handleSignout} />}
+    </>
+  );
+}
