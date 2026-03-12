@@ -1,8 +1,4 @@
-python3 - << 'PYEOF'
-html = open("/mnt/user-data/uploads/gossip-anonymous.html" if False else "/dev/null").read() if False else ""
-
-# Read the original from context - write the full fixed file
-content = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -167,13 +163,13 @@ content = r"""<!DOCTYPE html>
               Spill it. Say it. Stay anonymous. Every voice is <strong style={{ color: "#1a1a2e" }}>anonymous_user</strong> — no names, no receipts, just the real tea.
             </p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <button className="btn-primary" onClick={() => onNav("signup")} style={{ padding: "13px 32px", fontSize: 14, fontWeight: 700 }}>join gossip-anonymous &rarr;</button>
+              <button className="btn-primary" onClick={() => onNav("signup")} style={{ padding: "13px 32px", fontSize: 14, fontWeight: 700 }}>join gossip-anonymous →</button>
               <button className="btn-ghost" onClick={() => onNav("login")}>sign in</button>
             </div>
             <div style={{ display: "flex", gap: 32, justifyContent: "center", marginTop: 56, color: "#b4b4c4", fontSize: 12, flexWrap: "wrap" }}>
               {["no profiles visible", "no names attached", "just the real tea"].map(t => (
                 <span key={t} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ color: "#5b4fff", fontWeight: 700 }}>&#10003;</span> {t}
+                  <span style={{ color: "#5b4fff", fontWeight: 700 }}>✓</span> {t}
                 </span>
               ))}
             </div>
@@ -202,20 +198,20 @@ content = r"""<!DOCTYPE html>
 
       const verify = () => {
         if (code === vCode) onAuth(email);
-        else setErr("wrong code. (hint: " + vCode + ")");
+        else setErr(`wrong code. (hint: ${vCode})`);
       };
 
       return (
         <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "linear-gradient(160deg, #f0eeff 0%, #f7f7f5 60%)" }}>
           <div className="fade-up" style={{ maxWidth: 420, width: "100%" }}>
-            <button onClick={() => onNav("landing")} style={{ background: "none", color: "#7a7a8c", fontSize: 13, marginBottom: 36, display: "flex", alignItems: "center", gap: 6, fontWeight: 500 }}>&larr; back</button>
+            <button onClick={() => onNav("landing")} style={{ background: "none", color: "#7a7a8c", fontSize: 13, marginBottom: 36, display: "flex", alignItems: "center", gap: 6, fontWeight: 500 }}>← back</button>
             <div className="card" style={{ padding: "36px 32px" }}>
               <div style={{ marginBottom: 28 }}>
                 <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 700, marginBottom: 6 }}>
                   {step === "verify" ? "check your inbox" : isSig ? "join gossip-anonymous" : "welcome back"}
                 </h2>
                 <p style={{ color: "#7a7a8c", fontSize: 13, lineHeight: 1.6 }}>
-                  {step === "verify" ? "we sent a 6-digit code to " + email : isSig ? "your identity stays hidden. you'll always appear as anonymous_user." : "sign in and spill the tea."}
+                  {step === "verify" ? `we sent a 6-digit code to ${email}` : isSig ? "your identity stays hidden. you'll always appear as anonymous_user." : "sign in and spill the tea."}
                 </p>
               </div>
               {step === "form" ? (
@@ -226,11 +222,11 @@ content = r"""<!DOCTYPE html>
                   </div>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 700, color: "#7a7a8c", letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>password</label>
-                    <input type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
+                    <input type="password" placeholder="••••••••" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
                   </div>
                   {isSig && (
                     <div style={{ background: "#5b4fff14", border: "1px solid #5b4fff30", borderRadius: 10, padding: "12px 16px", display: "flex", gap: 12, alignItems: "flex-start" }}>
-                      <span style={{ fontSize: 16 }}>&#128100;</span>
+                      <span style={{ fontSize: 16 }}>👤</span>
                       <div>
                         <p style={{ fontSize: 12, fontWeight: 600, color: "#1a1a2e", marginBottom: 2 }}>you'll appear as <span style={{ color: "#5b4fff" }}>anonymous_user</span></p>
                         <p style={{ fontSize: 11, color: "#7a7a8c" }}>your email is only for verification. nobody can see it.</p>
@@ -239,7 +235,7 @@ content = r"""<!DOCTYPE html>
                   )}
                   {err && <p style={{ color: "#ef4444", fontSize: 12, fontWeight: 500 }}>{err}</p>}
                   <button className="btn-primary" onClick={submit} disabled={loading} style={{ marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    {loading ? <><Loader /> processing...</> : isSig ? "create account \u2192" : "sign in \u2192"}
+                    {loading ? <><Loader /> processing...</> : isSig ? "create account →" : "sign in →"}
                   </button>
                   <p style={{ textAlign: "center", fontSize: 12, color: "#7a7a8c" }}>
                     {isSig ? "already have an account? " : "new here? "}
@@ -255,7 +251,7 @@ content = r"""<!DOCTYPE html>
                   </p>
                   <input type="text" maxLength={6} placeholder="000000" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))} style={{ fontSize: 22, letterSpacing: "0.3em", textAlign: "center", fontFamily: "monospace" }} onKeyDown={e => e.key === "Enter" && verify()} />
                   {err && <p style={{ color: "#ef4444", fontSize: 12, fontWeight: 500 }}>{err}</p>}
-                  <button className="btn-primary" onClick={verify} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>verify &amp; enter &rarr;</button>
+                  <button className="btn-primary" onClick={verify} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>verify & enter →</button>
                 </div>
               )}
             </div>
@@ -287,7 +283,7 @@ content = r"""<!DOCTYPE html>
             </div>
             <nav style={{ padding: "12px 10px", flex: 1 }}>
               {navItems.map(item => (
-                <button key={item.id} className={"nav-item" + (tab === item.id ? " active" : "")} onClick={() => setTab(item.id)}>
+                <button key={item.id} className={`nav-item ${tab === item.id ? "active" : ""}`} onClick={() => setTab(item.id)}>
                   <Icon name={item.icon} size={16} color={tab === item.id ? "#5b4fff" : "#7a7a8c"} />
                   <span>{item.label}</span>
                   {item.badge && <span className="admin-badge" style={{ marginLeft: "auto" }}>admin</span>}
@@ -358,10 +354,10 @@ content = r"""<!DOCTYPE html>
         <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px" }}>
           <div className="card fade-up" style={{ padding: 20, marginBottom: 28 }}>
             <div style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "center" }}>
-              <div className="avatar">&#128100;</div>
+              <div className="avatar">👤</div>
               <span style={{ fontSize: 13, color: "#7a7a8c" }}>posting as <strong style={{ color: "#5b4fff" }}>anonymous_user</strong></span>
             </div>
-            <textarea rows={3} placeholder="spill the tea — no one knows it's you." value={draft} onChange={e => setDraft(e.target.value)} style={{ marginBottom: 12 }} />
+            <textarea rows={3} placeholder="spill the tea ☕ — no one knows it's you." value={draft} onChange={e => setDraft(e.target.value)} style={{ marginBottom: 12 }} />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 11, color: draft.length > 280 ? "#ef4444" : "#b4b4c4", fontWeight: 500 }}>{draft.length}/280</span>
               <button className="btn-primary" onClick={handlePost} disabled={posting || !draft.trim() || draft.length > 280} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 20px" }}>
@@ -386,7 +382,7 @@ content = r"""<!DOCTYPE html>
                 animDelay={i * 0.04} isAdmin={isAdmin} />
             ))}
           </div>
-          <p style={{ textAlign: "center", color: "#b4b4c4", fontSize: 12, marginTop: 40, fontWeight: 500 }}>&mdash; you've caught up on all the tea &mdash;</p>
+          <p style={{ textAlign: "center", color: "#b4b4c4", fontSize: 12, marginTop: 40, fontWeight: 500 }}>— you've caught up on all the tea —</p>
         </div>
       );
     }
@@ -405,11 +401,11 @@ content = r"""<!DOCTYPE html>
       const totalComments = post.comments.reduce((n, c) => n + 1 + c.replies.length, 0);
 
       return (
-        <div className="card fade-up" style={{ animationDelay: animDelay + "s", overflow: "hidden" }}>
+        <div className="card fade-up" style={{ animationDelay: `${animDelay}s`, overflow: "hidden" }}>
           <div style={{ padding: "20px 22px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div className="avatar">&#128100;</div>
+                <div className="avatar">👤</div>
                 <div>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "#5b4fff", display: "block" }}>anonymous_user</span>
                   <span style={{ fontSize: 11, color: "#b4b4c4" }}>{post.time}</span>
@@ -425,10 +421,10 @@ content = r"""<!DOCTYPE html>
               </div>
             )}
             <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-              <button onClick={() => onLike(post.id)} style={{ background: liked.has(post.id) ? "#fff1f1" : "transparent", color: liked.has(post.id) ? "#ef4444" : "#7a7a8c", display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "6px 10px", borderRadius: 7, transition: "all 0.15s", border: "1px solid " + (liked.has(post.id) ? "#fecaca" : "transparent") }}>
+              <button onClick={() => onLike(post.id)} style={{ background: liked.has(post.id) ? "#fff1f1" : "transparent", color: liked.has(post.id) ? "#ef4444" : "#7a7a8c", display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "6px 10px", borderRadius: 7, transition: "all 0.15s", border: `1px solid ${liked.has(post.id) ? "#fecaca" : "transparent"}` }}>
                 <Icon name={liked.has(post.id) ? "heartFill" : "heart"} size={14} color={liked.has(post.id) ? "#ef4444" : "#7a7a8c"} /> {post.likes}
               </button>
-              <button onClick={() => onToggleComments(post.id)} style={{ background: showComments ? "#5b4fff14" : "transparent", color: showComments ? "#5b4fff" : "#7a7a8c", display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "6px 10px", borderRadius: 7, transition: "all 0.15s", border: "1px solid " + (showComments ? "#5b4fff30" : "transparent") }}>
+              <button onClick={() => onToggleComments(post.id)} style={{ background: showComments ? "#5b4fff14" : "transparent", color: showComments ? "#5b4fff" : "#7a7a8c", display: "flex", alignItems: "center", gap: 5, fontSize: 13, fontWeight: 600, padding: "6px 10px", borderRadius: 7, transition: "all 0.15s", border: `1px solid ${showComments ? "#5b4fff30" : "transparent"}` }}>
                 <Icon name="comment" size={14} color={showComments ? "#5b4fff" : "#7a7a8c"} /> {totalComments} {totalComments === 1 ? "comment" : "comments"}
               </button>
             </div>
@@ -443,7 +439,7 @@ content = r"""<!DOCTYPE html>
                 </div>
               )}
               <div style={{ padding: "12px 22px 16px", borderTop: post.comments.length > 0 ? "1px solid #e8e8e2" : "none", display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <div className="avatar" style={{ width: 28, height: 28, fontSize: 12, marginTop: 2 }}>&#128100;</div>
+                <div className="avatar" style={{ width: 28, height: 28, fontSize: 12, marginTop: 2 }}>👤</div>
                 <div style={{ flex: 1 }}>
                   <textarea rows={2} placeholder="write a comment..." value={commentDraft} onChange={e => setCommentDraft(e.target.value)} style={{ fontSize: 13, marginBottom: 8 }} />
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -477,7 +473,7 @@ content = r"""<!DOCTYPE html>
       return (
         <div className="slide-in">
           <div style={{ display: "flex", gap: 10 }}>
-            <div className="avatar" style={{ width: 26, height: 26, fontSize: 11 }}>&#128100;</div>
+            <div className="avatar" style={{ width: 26, height: 26, fontSize: 11 }}>👤</div>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "#5b4fff" }}>anonymous_user</span>
@@ -510,7 +506,7 @@ content = r"""<!DOCTYPE html>
             <div className="reply-indent" style={{ marginTop: 10 }}>
               {comment.replies.map(reply => (
                 <div key={reply.id} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                  <div className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>&#128100;</div>
+                  <div className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>👤</div>
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: "#5b4fff" }}>anonymous_user</span>
@@ -537,23 +533,23 @@ content = r"""<!DOCTYPE html>
         <div style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px" }}>
           <div className="fade-up" style={{ marginBottom: 28 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16, background: "#ffffff", border: "1.5px solid #e8e8e2", borderRadius: 14, padding: "20px 24px" }}>
-              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#5b4fff14", border: "2px solid #5b4fff30", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>&#128100;</div>
+              <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#5b4fff14", border: "2px solid #5b4fff30", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👤</div>
               <div>
                 <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, marginBottom: 2 }}>anonymous_user</h2>
-                <p style={{ fontSize: 13, color: "#7a7a8c" }}>{myPosts.length} post{myPosts.length !== 1 ? "s" : ""} &middot; {myPosts.reduce((n, p) => n + p.likes, 0)} total likes</p>
+                <p style={{ fontSize: 13, color: "#7a7a8c" }}>{myPosts.length} post{myPosts.length !== 1 ? "s" : ""} · {myPosts.reduce((n, p) => n + p.likes, 0)} total likes</p>
               </div>
             </div>
           </div>
           {myPosts.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 0", color: "#7a7a8c" }}>
-              <p style={{ fontSize: 32, marginBottom: 12 }}>&#127761;</p>
+              <p style={{ fontSize: 32, marginBottom: 12 }}>🌑</p>
               <p style={{ fontSize: 15, fontWeight: 600 }}>no tea spilled yet</p>
               <p style={{ fontSize: 13, marginTop: 4 }}>go to the feed and spill some tea.</p>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {myPosts.map((post, i) => (
-                <div key={post.id} className="card fade-up" style={{ padding: "20px 22px", animationDelay: (i * 0.05) + "s" }}>
+                <div key={post.id} className="card fade-up" style={{ padding: "20px 22px", animationDelay: `${i * 0.05}s` }}>
                   <p style={{ fontSize: 15, lineHeight: 1.65, color: "#1a1a2e", marginBottom: 14 }}>{post.content}</p>
                   <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                     <span style={{ fontSize: 12, color: "#7a7a8c", display: "flex", alignItems: "center", gap: 5 }}><Icon name="heart" size={13} color="#7a7a8c" /> {post.likes}</span>
@@ -586,7 +582,7 @@ content = r"""<!DOCTYPE html>
         if (!newAdmin || !/\S+@\S+\.\S+/.test(newAdmin)) { setAdminErr("enter a valid email."); return; }
         if (admins.has(newAdmin)) { setAdminErr("already an admin."); return; }
         setAdmins(prev => new Set([...prev, newAdmin]));
-        setAdminErr(""); setAdminOk(newAdmin + " is now an admin.");
+        setAdminErr(""); setAdminOk(`${newAdmin} is now an admin.`);
         setNewAdmin(""); setTimeout(() => setAdminOk(""), 3000);
       };
 
@@ -624,7 +620,7 @@ content = r"""<!DOCTYPE html>
                   { label: "Total Comments", value: totalComments, color: "#22c55e" },
                   { label: "Unique Users", value: uniqueUsers, color: "#f59e0b" },
                 ].map(s => (
-                  <div key={s.label} className="stat-card" style={{ borderLeft: "3px solid " + s.color }}>
+                  <div key={s.label} className="stat-card" style={{ borderLeft: `3px solid ${s.color}` }}>
                     <p style={{ fontSize: 11, color: "#7a7a8c", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 8 }}>{s.label}</p>
                     <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</p>
                   </div>
@@ -632,19 +628,19 @@ content = r"""<!DOCTYPE html>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                 <div className="stat-card">
-                  <p style={{ fontSize: 11, color: "#7a7a8c", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>top post</p>
+                  <p style={{ fontSize: 11, color: "#7a7a8c", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>🔥 top post</p>
                   {topPost && (
                     <>
-                      <p style={{ fontSize: 13, lineHeight: 1.55, color: "#1a1a2e", marginBottom: 10 }}>"{topPost.content.slice(0, 100)}{topPost.content.length > 100 ? "..." : ""}"</p>
+                      <p style={{ fontSize: 13, lineHeight: 1.55, color: "#1a1a2e", marginBottom: 10 }}>"{topPost.content.slice(0, 100)}{topPost.content.length > 100 ? "…" : ""}"</p>
                       <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>&hearts; {topPost.likes} likes</span>
+                        <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>♥ {topPost.likes} likes</span>
                         <span style={{ fontSize: 12, color: "#f59e0b" }}>{topPost.email}</span>
                       </div>
                     </>
                   )}
                 </div>
                 <div className="stat-card">
-                  <p style={{ fontSize: 11, color: "#7a7a8c", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>most active user</p>
+                  <p style={{ fontSize: 11, color: "#7a7a8c", fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>✍️ most active user</p>
                   {topUser && (
                     <>
                       <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 700, color: "#5b4fff", marginBottom: 6 }}>{topUser[1]} posts</p>
@@ -672,8 +668,8 @@ content = r"""<!DOCTYPE html>
                       </div>
                       <p style={{ fontSize: 14, color: "#1a1a2e", lineHeight: 1.55, marginBottom: 8 }}>{post.content}</p>
                       <div style={{ display: "flex", gap: 14 }}>
-                        <span style={{ fontSize: 12, color: "#7a7a8c" }}>&hearts; {post.likes}</span>
-                        <span style={{ fontSize: 12, color: "#7a7a8c" }}>&#128172; {post.comments.length}</span>
+                        <span style={{ fontSize: 12, color: "#7a7a8c" }}>♥ {post.likes}</span>
+                        <span style={{ fontSize: 12, color: "#7a7a8c" }}>💬 {post.comments.length}</span>
                       </div>
                     </div>
                     <button onClick={() => deletePost(post.id)} style={{ background: "#fef2f2", color: "#ef4444", border: "1px solid #fecaca", borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
@@ -694,7 +690,7 @@ content = r"""<!DOCTYPE html>
                   <div key={email} className="card" style={{ padding: "16px 20px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div className="avatar">&#128100;</div>
+                        <div className="avatar">👤</div>
                         <div>
                           <p style={{ fontSize: 12, fontWeight: 700, color: "#5b4fff" }}>anonymous_user</p>
                           <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -724,7 +720,7 @@ content = r"""<!DOCTYPE html>
                   <button className="btn-primary" onClick={grantAdmin} style={{ flexShrink: 0, background: "#f59e0b", padding: "10px 18px" }}>Grant</button>
                 </div>
                 {adminErr && <p style={{ color: "#ef4444", fontSize: 12, marginTop: 8, fontWeight: 500 }}>{adminErr}</p>}
-                {adminOk && <p style={{ color: "#22c55e", fontSize: 12, marginTop: 8, fontWeight: 500 }}>&#10003; {adminOk}</p>}
+                {adminOk && <p style={{ color: "#22c55e", fontSize: 12, marginTop: 8, fontWeight: 500 }}>✓ {adminOk}</p>}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {[...admins].map(email => (
@@ -733,7 +729,7 @@ content = r"""<!DOCTYPE html>
                       <Icon name="crown" size={16} color="#f59e0b" />
                       <div>
                         <span style={{ fontSize: 13, color: "#1a1a2e", fontWeight: 600 }}>{email}</span>
-                        {email === ADMIN_EMAIL && <span style={{ fontSize: 11, color: "#7a7a8c", display: "block" }}>owner &mdash; cannot be revoked</span>}
+                        {email === ADMIN_EMAIL && <span style={{ fontSize: 11, color: "#7a7a8c", display: "block" }}>owner — cannot be revoked</span>}
                       </div>
                     </div>
                     {email !== ADMIN_EMAIL && (
@@ -765,10 +761,4 @@ content = r"""<!DOCTYPE html>
     ReactDOM.render(<Root />, document.getElementById("root"));
   </script>
 </body>
-</html>"""
-
-with open("/mnt/user-data/outputs/gossip-anonymous.html", "w") as f:
-    f.write(content)
-
-print("Done! Lines:", content.count("\n"))
-PYEOF
+</html>
